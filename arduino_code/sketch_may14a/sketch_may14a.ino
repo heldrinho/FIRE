@@ -1,21 +1,34 @@
 //Incluindo Bibliotecas
 #include <Wire.h>
 #include <Adafruit_BMP280.h>
+#include <Arduino.h>
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
 
 Adafruit_BMP280 bmp; //I2C
+WiFiClient client;
+HTTPClient httpClient;
 
 const int AOUTpin=A0; //the AOUT pin of the alcohol sensor goes into analog pin A0 of the arduino
 //const int DOUTpin=8; //the DOUT pin of the alcohol sensor goes into digital pin D8 of the arduino
 
-int limit;
 int value;
+const char *WIFI_SSID = "HackaTruckIoT";
+const char *WIFI_PASSWORD = "iothacka";
+const char *URL = "http://192.168.128.118:1880/enviar";
 
 void setup() {
   //Iniciando a comunicação serial
-  Serial.begin(9600);
   // Imprimindo Mensagem de teste no Monitor Serial
+  Serial.begin(115200);
   Serial.println(F("BMP280 teste"));
-  Serial.begin(115200); //sets the baud rate
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+    Serial.println("Connected");
+    delay(2000); //sets the baud rate
   //pinMode(DOUTpin, INPUT); //sets the pin as an input to the arduino
   
   if (!bmp.begin(0x76)) { /*Definindo o endereço I2C como 0x76. Mudar, se necessário, para (0x77)*/
@@ -38,9 +51,18 @@ void loop() {
   //limit= digitalRead(DOUTpin); //reads the digital value from the alcohol sensor's DOUT pin
   Serial.print(" Alcohol value: ");
   Serial.println(value); //prints the alcohol value
-  Serial.print("Limit: ");
-  Serial.print(limit); //prints the limit reached as either LOW or HIGH (above or underneath)
+ //prints the limit reached as either LOW or HIGH (above or underneath)
   delay(100);
+  httpClient.begin(client, URL);
+  httpClient.addHeader("Content-Type", "application/x-www-form-urlencoded");
+  httpClient.POST(String(value));
+  String content = httpClient.getString();
+  httpClient.end();
+
+  //Serial.print(output_value); 
+  Serial.print("\n resposta");   
+  Serial.println(content);
+  delay(5000);
 
 /*if (limit == HIGH){
 digitalWrite(ledPin, HIGH); //if limit has been reached, LED turns on as status indicator
