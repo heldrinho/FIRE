@@ -15,7 +15,7 @@ const int AOUTpin=A0; //the AOUT pin of the alcohol sensor goes into analog pin 
 int value;
 const char *WIFI_SSID = "HackaTruckIoT";
 const char *WIFI_PASSWORD = "iothacka";
-const char *URL = "http://192.168.128.118:1880/enviar";
+const char *URL = "http://192.168.128.118:1880/envio";
 
 void setup() {
   //Iniciando a comunicação serial
