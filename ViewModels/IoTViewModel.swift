@@ -22,10 +22,21 @@ class IoTViewModel: ObservableObject {
     private let nodeRedURL = URL(string: "http://192.168.128.118:1880/leitura")!
     
     private var macConectado: String? = nil
+    // Chaves para o UserDefaults
+    private let devicesKey = "saved_devices"
+    private let roomsKey = "saved_rooms"
     
     init() {
         loadInitialData()
         startRealTimeUpdates()
+    }
+    func saveData() {
+        if let encodedDevices = try? JSONEncoder().encode(devices) {
+            UserDefaults.standard.set(encodedDevices, forKey: devicesKey)
+        }
+        if let encodedRooms = try? JSONEncoder().encode(rooms) {
+            UserDefaults.standard.set(encodedRooms, forKey: roomsKey)
+        }
     }
     
     private func loadInitialData() {
@@ -75,9 +86,9 @@ class IoTViewModel: ObservableObject {
     
     private func updateDeviceData(with fullList: [NodeRedResponse]) {
         // NOVIDADE: Se o app ainda não sabe o MAC, ele pega da leitura mais recente do servidor!
-        if self.macConectado == nil {
-            self.macConectado = fullList.last?.mac
-        }
+        //if self.macConectado == nil {
+          //  self.macConectado = fullList.last?.mac
+        //}
         
         // Garante que conseguimos descobrir um MAC antes de continuar
         guard let macAtual = self.macConectado else { return }
@@ -116,7 +127,13 @@ class IoTViewModel: ObservableObject {
         }
     }
     
-    func addDevice(name: String, roomType: RoomType, connection: ConnectionType) {
+    func addDevice(name: String, roomType: RoomType, connection: ConnectionType, scannedCode: String? = nil) {
+        // 1. Se um código QR foi escaneado, salvamos ele na variável da classe
+        if let mac = scannedCode, !mac.isEmpty {
+            self.macConectado = mac
+        }
+        
+        // 2. Lógica original de criação de ambiente
         var targetRoom = rooms.first(where: { $0.type == roomType })
         if targetRoom == nil {
             let newRoom = Room(id: UUID(), name: roomType.rawValue, type: roomType)
@@ -124,7 +141,17 @@ class IoTViewModel: ObservableObject {
             targetRoom = newRoom
         }
         
-        let newDevice = Device(id: UUID(), name: name, roomId: targetRoom!.id, temperature: 25.0, smokeLevel: 0.0, batteryLevel: 100, status: .online, connectionType: connection, lastUpdated: Date())
+        // 3. Lógica original de criação do dispositivo
+        let newDevice = Device(id: UUID(),
+                               name: name,
+                               roomId: targetRoom!.id,
+                               temperature: 25.0,
+                               smokeLevel: 0.0,
+                               batteryLevel: 100,
+                               status: .online,
+                               connectionType: connection,
+                               lastUpdated: Date())
+                               
         devices.append(newDevice)
     }
     

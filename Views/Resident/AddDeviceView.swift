@@ -1,10 +1,6 @@
-//
-//  AddDeviceView.swift
-//  FIRE
-//
-//  Created by Helder Filipe on 14/05/26.
-//
 import SwiftUI
+import PhotosUI
+import CoreImage
 
 struct AddDeviceView: View {
     @Environment(\.presentationMode) var presentationMode
@@ -13,7 +9,14 @@ struct AddDeviceView: View {
     @State private var deviceName = ""
     @State private var selectedRoom: RoomType = .kitchen
     @State private var connectionType: ConnectionType = .wifi
-    @State private var isScanningQR = false
+    
+    // 1. NOVO ESTADO: Variável para guardar o código MAC/Serial extraído da imagem
+    @State private var scannedQRCode: String? = nil
+    
+    @State private var selectedPhotoItem: PhotosPickerItem? = nil
+    @State private var isShowingAlert = false
+    @State private var alertTitle = ""
+    @State private var alertMessage = ""
     
     var body: some View {
         NavigationView {
@@ -35,38 +38,98 @@ struct AddDeviceView: View {
                     }
                     .pickerStyle(SegmentedPickerStyle())
                     
-                    Button(action: {
-                        isScanningQR = true
-                    }) {
+                    PhotosPicker(selection: $selectedPhotoItem, matching: .images, photoLibrary: .shared()) {
                         HStack {
-                            Image(systemName: "qrcode.viewfinder")
-                            Text("Escanear QR Code do Dispositivo")
+                            Image(systemName: "photo.on.rectangle")
+                            Text("Importar QR Code da Galeria")
                         }
                         .foregroundColor(.red)
+                    }
+                    .onChange(of: selectedPhotoItem) { _, newItem in
+                        Task {
+                            if let data = try? await newItem?.loadTransferable(type: Data.self),
+                               let uiImage = UIImage(data: data) {
+                                processQRCode(from: uiImage)
+                            }
+                        }
+                    }
+                    
+                    // Feedback visual extra para o usuário indicando sucesso na leitura
+                    if let code = scannedQRCode {
+                        Text("Código validado: \(code)")
+                            .font(.footnote)
+                            .foregroundColor(.green)
                     }
                 }
                 
                 Section {
                     Button(action: {
-                        iotVM.addDevice(name: deviceName.isEmpty ? "Novo Sensor" : deviceName, roomType: selectedRoom, connection: connectionType)
+                        // 2. INTEGRAÇÃO: Aqui enviamos o scannedQRCode para a ViewModel
+                        iotVM.addDevice(name: deviceName.isEmpty ? "Novo Sensor" : deviceName,
+                                        roomType: selectedRoom,
+                                        connection: connectionType,
+                                        scannedCode: scannedQRCode)
+                        
                         presentationMode.wrappedValue.dismiss()
                     }) {
                         Text("Conectar ao Aplicativo")
                             .frame(maxWidth: .infinity, alignment: .center)
                             .foregroundColor(.white)
                     }
-                    .listRowBackground(Color.red)
+                    .listRowBackground(scannedQRCode == nil ? Color.gray : Color.red)
+                    // 👇 ADICIONE ESTA LINHA: Desativa o botão se scannedQRCode for nil
+                    .disabled(scannedQRCode == nil)
                 }
             }
             .navigationBarTitle("Novo Detector", displayMode: .inline)
             .navigationBarItems(trailing: Button("Cancelar") {
                 presentationMode.wrappedValue.dismiss()
             })
-            .alert(isPresented: $isScanningQR) {
-                Alert(title: Text("Leitura de QR Code"), message: Text("Código serial ESP-998877 capturado com sucesso! Configurações de Wi-Fi transferidas."), dismissButton: .default(Text("OK")) {
-                    deviceName = "Detector Premium IoT"
-                })
+            .alert(isPresented: $isShowingAlert) {
+                Alert(
+                    title: Text(alertTitle),
+                    message: Text(alertMessage),
+                    dismissButton: .default(Text("OK")) {
+                        if alertTitle == "Sucesso" && deviceName.isEmpty {
+                            deviceName = "Detector Premium IoT"
+                        }
+                    }
+                )
             }
+        }
+    }
+    
+    // MARK: - Função de Leitura do QR Code
+    private func processQRCode(from image: UIImage) {
+        guard let ciImage = CIImage(image: image) else {
+            showAlert(title: "Erro", message: "Não foi possível carregar a imagem.")
+            return
+        }
+        
+        let detector = CIDetector(ofType: CIDetectorTypeQRCode,
+                                  context: nil,
+                                  options: [CIDetectorAccuracy: CIDetectorAccuracyHigh])
+        
+        let features = detector?.features(in: ciImage) as? [CIQRCodeFeature]
+        
+        if let firstFeature = features?.first, let qrCodeString = firstFeature.messageString {
+            // 3. SALVAR O CÓDIGO: Guardamos a string decodificada no estado da tela
+            DispatchQueue.main.async {
+                self.scannedQRCode = qrCodeString
+            }
+            showAlert(title: "Sucesso", message: "Código capturado: \(qrCodeString). Configurações transferidas.")
+        } else {
+            showAlert(title: "Aviso", message: "Nenhum QR Code válido foi encontrado na imagem selecionada.")
+        }
+        
+        selectedPhotoItem = nil
+    }
+    
+    private func showAlert(title: String, message: String) {
+        DispatchQueue.main.async {
+            self.alertTitle = title
+            self.alertMessage = message
+            self.isShowingAlert = true
         }
     }
 }
