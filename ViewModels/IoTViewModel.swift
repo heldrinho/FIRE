@@ -37,14 +37,13 @@ class IoTViewModel: ObservableObject {
             Room(id: livingRoomId, name: "Sala de Estar", type: .livingRoom)
         ]
         
-        let dev1 = Device(id: UUID(), name: "Detector Cozinha", roomId: kitchenId, temperature: 24.5, smokeLevel: 2.1, batteryLevel: 92, status: .online, connectionType: .wifi, lastUpdated: Date())
-        let dev2 = Device(id: UUID(), name: "Detector Sala", roomId: livingRoomId, temperature: 23.0, smokeLevel: 0.0, batteryLevel: 15, status: .online, connectionType: .wifi, lastUpdated: Date())
+        let dev1 = Device(id: UUID(), name: "Sensor", roomId: kitchenId, temperature: 0, smokeLevel: 0, batteryLevel: 0, status: .offline, connectionType: .wifi, lastUpdated: Date())
         
-        devices = [dev1, dev2]
+        
+        devices = [dev1]
         
         history = [
             AlertEvent(id: UUID(), deviceId: dev1.id, deviceName: dev1.name, type: .test, timestamp: Date().addingTimeInterval(-86400), durationSeconds: 10),
-            AlertEvent(id: UUID(), deviceId: dev2.id, deviceName: dev2.name, type: .lowBattery, timestamp: Date().addingTimeInterval(-3600), durationSeconds: 0)
         ]
     }
     
