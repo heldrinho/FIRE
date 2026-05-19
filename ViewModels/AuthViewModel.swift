@@ -6,17 +6,26 @@
 //
 import Foundation
 import SwiftUI
-import Combine // ⚠️ ESSENCIAL para o funcionamento do @Published
+import Combine
 
 class AuthViewModel: ObservableObject {
     @Published var currentUser: User?
-    @Published var isAuthenticated: Bool = false
+    
+    // 1. MUDANÇA PRINCIPAL: Já nasce como true (logado)
+    @Published var isAuthenticated: Bool = true
+    
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     
+    // 2. ADICIONAMOS O INIT: Preenche os dados do usuário assim que o app abre
+    init() {
+        self.currentUser = User(id: "usr_123", name: "Usuário", email: "morador@fire.com", phone: "85988888888", role: .resident, familyMembers: ["fam_456"])
+    }
+    
+    // As funções abaixo continuam existindo caso vocês precisem do botão de "Sair" depois,
+    // mas elas não vão mais travar a entrada do app.
     func login(email: String, pass: String) {
         isLoading = true
-        // Simulação de autenticação
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             self.isLoading = false
             if email.contains("admin") {
