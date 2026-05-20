@@ -53,59 +53,33 @@ struct DeviceDetailView: View {
             .padding(.horizontal)
             
             Spacer()
-            
-            // RF09 - Execução de Teste Remoto
-            Button(action: {
-                isTesting = true
-                iotVM.testAlarm(device: device)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                    isTesting = false
-                }
-            }) {
-                HStack {
-                    if isTesting {
-                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    } else {
-                        Image(systemName: "bell.and.waveform.fill")
-                    }
-                    Text(isTesting ? "Testando Sirene..." : "Testar Alarme Remotamente")
-                        .fontWeight(.bold)
-                }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(isTesting ? Color.gray : Color.red)
-                .cornerRadius(12)
-            }
-            .disabled(isTesting)
-            .padding()
+                .navigationBarTitle(device.name, displayMode: .inline)
         }
-        .navigationBarTitle(device.name, displayMode: .inline)
     }
-}
-
-struct MetricTile: View {
-    let title: String
-    let value: String
-    let icon: String
     
-    var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .foregroundColor(.red)
-                .font(.title3)
-                .frame(width: 30)
-            VStack(alignment: .leading) {
-                Text(title)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Text(value)
-                    .font(.headline)
+    struct MetricTile: View {
+        let title: String
+        let value: String
+        let icon: String
+        
+        var body: some View {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundColor(.red)
+                    .font(.title3)
+                    .frame(width: 30)
+                VStack(alignment: .leading) {
+                    Text(title)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text(value)
+                        .font(.headline)
+                }
+                Spacer()
             }
-            Spacer()
+            .padding()
+            .background(Color(.secondarySystemBackground))
+            .cornerRadius(10)
         }
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(10)
     }
 }

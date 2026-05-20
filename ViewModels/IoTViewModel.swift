@@ -84,6 +84,23 @@ class IoTViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
+    func sendPushNotification(title: String, body: String) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = UNNotificationSound.defaultCritical // Som de alerta alto
+        
+        // Mostra a notificação em 1 segundo
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("Erro ao enviar notificação: \(error.localizedDescription)")
+            }
+        }
+    }
+    
     private func updateDeviceData(with fullList: [NodeRedResponse]) {
         // NOVIDADE: Se o app ainda não sabe o MAC, ele pega da leitura mais recente do servidor!
         //if self.macConectado == nil {
@@ -123,6 +140,41 @@ class IoTViewModel: ObservableObject {
             if self.activeEmergency != nil {
                 self.activeEmergency = nil
                 self.devices[index].status = .online
+            }
+        }
+        evaluateEmergencyState(temp: ultimaLeitura.temperatura, gas: ultimaLeitura.gas)
+        
+        func evaluateEmergencyState(temp: Double, gas: Double) {
+            // 🔴 Categoria 4: CRÍTICO (Incêndio Confirmado)
+            // Parâmetro: Temperatura > 45 e Gás > 650
+            if temp >= 45.0 && gas >= 650.0 {
+                sendPushNotification(
+                    title: "🚨 INCÊNDIO CONFIRMADO",
+                    body: "Fogo ativo e fumaça detectados na sala. Evacue imediatamente!"
+                )
+                // Aqui você também pode mudar a cor da tela para vermelho
+                
+            // 🟠 Categoria 3: ANOMALIA TÉRMICA
+            // Parâmetro: Temperatura > 45 e Gás < 600
+            } else if temp >= 45.0 && gas <= 600.0 {
+                sendPushNotification(
+                    title: "🔥 ALERTA TÉRMICO",
+                    body: "Calor excessivo na sala, mas sem fumaça. Verifique o ar-condicionado."
+                )
+                
+            // 🟡 Categoria 2: ALERTA (Fumaça/Vazamento)
+            // Parâmetro: Temperatura < 30 e Gás > 650 [cite: 1]
+            } else if temp <= 30.0 && gas >= 650.0 {
+                sendPushNotification(
+                    title: "⚠️ ALERTA DE FUMAÇA/GÁS",
+                    body: "Nível alto de gás detectado. Verificar a sala preventivamente."
+                )
+                
+            // 🟢 Categoria 1: NORMAL
+            // Parâmetro: Temperatura < 30 e Gás < 600 [cite: 1]
+            } else if temp <= 30.0 && gas <= 600.0 {
+                // Ambiente seguro e climatizado[cite: 1]. Não mandamos notificação, apenas mantemos o status verde na interface.
+                print("Status: Normal. Nada a reportar.")
             }
         }
     }

@@ -6,6 +6,17 @@
 //
 
 import SwiftUI
+import UserNotifications 
+
+func requestNotificationPermission() {
+    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
+        if granted {
+            print("Permissão para notificações concedida!")
+        } else if let error = error {
+            print("Erro na permissão: \(error.localizedDescription)")
+        }
+    }
+}
 
 struct ContentView: View {
     @EnvironmentObject var authVM: AuthViewModel
@@ -24,6 +35,9 @@ struct ContentView: View {
             }
         }
         .animation(.easeInOut, value: authVM.isAuthenticated)
+        .onAppear {
+                    requestNotificationPermission()
+                }
     }
 }
 
