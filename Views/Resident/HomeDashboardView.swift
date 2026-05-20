@@ -13,6 +13,8 @@ struct HomeDashboardView: View {
     @State private var showHistory = false
     @State private var showEmergencyContacts = false
     
+    @State private var showRemoveDevice = false
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -78,7 +80,7 @@ struct HomeDashboardView: View {
                             .cornerRadius(16)
                             .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.red.opacity(0.3), style: StrokeStyle(lineWidth: 2, dash: [5])))
                         }
-                        Button(action: { showAddDevice = true }) {
+                        Button(action: { showRemoveDevice = true }) {
                             VStack {
                                 Image(systemName: "minus.circle.fill")
                                     .font(.system(size: 32))
@@ -131,6 +133,10 @@ struct HomeDashboardView: View {
             .sheet(isPresented: $showAddDevice) {
                 AddDeviceView()
                     .environmentObject(iotVM)
+            }
+            .sheet(isPresented: $showRemoveDevice) {
+                    RemoveDeviceView()
+                    .environmentObject(iotVM) // Passamos a ViewModel para a tela de remoção
             }
             .sheet(isPresented: $showHistory) {
                 HistoryView()
