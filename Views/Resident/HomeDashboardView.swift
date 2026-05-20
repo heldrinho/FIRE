@@ -78,6 +78,21 @@ struct HomeDashboardView: View {
                             .cornerRadius(16)
                             .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.red.opacity(0.3), style: StrokeStyle(lineWidth: 2, dash: [5])))
                         }
+                        Button(action: { showAddDevice = true }) {
+                            VStack {
+                                Image(systemName: "minus.circle.fill")
+                                    .font(.system(size: 32))
+                                    .foregroundColor(.red)
+                                Text("Remover")
+                                    .font(.footnote)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.primary)
+                            }
+                            .frame(maxWidth: .infinity, minHeight: 120)
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(16)
+                            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.red.opacity(0.3), style: StrokeStyle(lineWidth: 2, dash: [5])))
+                        }
                     }
                     .padding(.horizontal)
                     
