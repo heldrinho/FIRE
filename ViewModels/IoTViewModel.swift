@@ -9,6 +9,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import UserNotifications
 
 class IoTViewModel: ObservableObject {
     @Published var rooms: [Room] = []
@@ -19,9 +20,11 @@ class IoTViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var timer: Timer?
     
+    // URL do seu Node-RED
     private let nodeRedURL = URL(string: "http://192.168.128.118:1880/leitura")!
     
     private var macConectado: String? = nil
+    
     // Chaves para o UserDefaults
     private let devicesKey = "saved_devices"
     private let roomsKey = "saved_rooms"
@@ -30,6 +33,7 @@ class IoTViewModel: ObservableObject {
         loadInitialData()
         startRealTimeUpdates()
     }
+    
     func saveData() {
         if let encodedDevices = try? JSONEncoder().encode(devices) {
             UserDefaults.standard.set(encodedDevices, forKey: devicesKey)
@@ -48,8 +52,8 @@ class IoTViewModel: ObservableObject {
             Room(id: livingRoomId, name: "Sala de Estar", type: .livingRoom)
         ]
         
-        let dev1 = Device(id: UUID(), name: "Sensor", roomId: kitchenId, temperature: 0, smokeLevel: 0, batteryLevel: 0, status: .offline, connectionType: .wifi, lastUpdated: Date())
-        
+        // Dispositivo criado com o nome "Sensor"
+        let dev1 = Device(id: UUID(), name: "Sensor", roomId: kitchenId, temperature: 0, smokeLevel: 0, batteryLevel: 100, status: .offline, connectionType: .wifi, lastUpdated: Date())
         
         devices = [dev1]
         
@@ -67,30 +71,38 @@ class IoTViewModel: ObservableObject {
     }
     
     private func fetchSensorData() {
-        URLSession.shared.dataTaskPublisher(for: nodeRedURL)
-            .map { $0.data }
-            .decode(type: [NodeRedResponse].self, decoder: JSONDecoder())
-            .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { completion in
-                if case .failure(let error) = completion {
-                    print("Erro Node-RED: \(error.localizedDescription)")
-                    if let index = self.devices.firstIndex(where: { $0.name == "Detector Cozinha" }) {
-                        self.devices[index].status = .offline
-                    }
-                }
-            }, receiveValue: { [weak self] responseList in
-                self?.updateDeviceData(with: responseList)
-            })
-            .store(in: &cancellables)
+//        URLSession.shared.dataTaskPublisher(for: nodeRedURL)
+//            .map { $0.data }
+//            .decode(type: [NodeRedResponse].self, decoder: JSONDecoder())
+//            .receive(on: DispatchQueue.main)
+//            .sink(receiveCompletion: { completion in
+//                if case .failure(let error) = completion {
+//                    print("Erro Node-RED: \(error.localizedDescription)")
+//                    // Se falhar a conexão, marca o sensor como offline
+//                    if let index = self.devices.firstIndex(where: { $0.name == "Sensor" }) {
+//                        self.devices[index].status = .offline
+//                    }
+//                }
+//            }, receiveValue: { [weak self] responseList in
+//                self?.updateDeviceData(with: responseList)
+//            })
+//            .store(in: &cancellables)
+            let leituraFake = NodeRedResponse(id: nil,
+                                              rev: nil,
+                                              mac: self.macConectado ?? "MAC_TESTE",
+                    temperatura: 55.0,
+                    gas: 900.0,
+                )
+        self.updateDeviceData(with: [leituraFake])
+        
     }
     
     func sendPushNotification(title: String, body: String) {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
-        content.sound = UNNotificationSound.defaultCritical // Som de alerta alto
+        content.sound = UNNotificationSound.defaultCritical
         
-        // Mostra a notificação em 1 segundo
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
         
@@ -102,33 +114,33 @@ class IoTViewModel: ObservableObject {
     }
     
     private func updateDeviceData(with fullList: [NodeRedResponse]) {
-        // NOVIDADE: Se o app ainda não sabe o MAC, ele pega da leitura mais recente do servidor!
-        //if self.macConectado == nil {
-          //  self.macConectado = fullList.last?.mac
-        //}
+        // Se ainda não temos o MAC, tentamos pegar o último que chegou no servidor
+        if self.macConectado == nil {
+            self.macConectado = fullList.last?.mac
+        }
         
-        // Garante que conseguimos descobrir um MAC antes de continuar
         guard let macAtual = self.macConectado else { return }
         
-        // 1. Filtra a lista gigante do Node-RED usando o MAC que o app acabou de descobrir
+        // Filtra leituras da placa específica
         let leiturasDaMinhaPlaca = fullList.filter { $0.mac == macAtual }
-        
-        // 2. Pega a ÚLTIMA leitura da lista
         guard let ultimaLeitura = leiturasDaMinhaPlaca.last else { return }
         
-        // 3. Acha o "Detector Cozinha" na tela do celular
-        guard let index = self.devices.firstIndex(where: { $0.name == "Detector Cozinha" }) else { return }
+        // Procura o dispositivo pelo nome correto ("Sensor")
+        guard let index = self.devices.firstIndex(where: { $0.name == "Sensor" }) else { return }
         
-        // Converte o valor bruto do gás para porcentagem
         let smokePercentage = (ultimaLeitura.gas / 1024.0) * 100.0
         
-        // Atualiza a interface
+        // Atualiza variáveis do dispositivo
         self.devices[index].temperature = ultimaLeitura.temperatura
         self.devices[index].smokeLevel = smokePercentage
         self.devices[index].status = .online
         self.devices[index].lastUpdated = Date()
         
-        // Regra de Alerta (Temperaturas acima de 50C ou Gás muito alto disparam a interface vermelha)
+        // 1. Avalia se deve enviar Notificação Push
+        evaluateEmergencyState(temp: ultimaLeitura.temperatura, gas: ultimaLeitura.gas)
+        
+        // 2. Atualiza o estado visual de emergência (Interface Vermelha)
+        // Regra: Temperaturas críticas ou Gás muito alto
         if ultimaLeitura.temperatura > 50.0 || ultimaLeitura.gas > 800 {
             if self.activeEmergency == nil {
                 let newAlert = AlertEvent(id: UUID(), deviceId: self.devices[index].id, deviceName: self.devices[index].name, type: .fire, timestamp: Date(), durationSeconds: 0)
@@ -142,50 +154,43 @@ class IoTViewModel: ObservableObject {
                 self.devices[index].status = .online
             }
         }
-        evaluateEmergencyState(temp: ultimaLeitura.temperatura, gas: ultimaLeitura.gas)
+    }
+    
+    // Função de lógica de decisão baseada nos "dados hacka"
+    func evaluateEmergencyState(temp: Double, gas: Double) {
         
-        func evaluateEmergencyState(temp: Double, gas: Double) {
-            // 🔴 Categoria 4: CRÍTICO (Incêndio Confirmado)
-            // Parâmetro: Temperatura > 45 e Gás > 650
-            if temp >= 45.0 && gas >= 650.0 {
-                sendPushNotification(
-                    title: "🚨 INCÊNDIO CONFIRMADO",
-                    body: "Fogo ativo e fumaça detectados na sala. Evacue imediatamente!"
-                )
-                // Aqui você também pode mudar a cor da tela para vermelho
-                
-            // 🟠 Categoria 3: ANOMALIA TÉRMICA
-            // Parâmetro: Temperatura > 45 e Gás < 600
-            } else if temp >= 45.0 && gas <= 600.0 {
-                sendPushNotification(
-                    title: "🔥 ALERTA TÉRMICO",
-                    body: "Calor excessivo na sala, mas sem fumaça. Verifique o ar-condicionado."
-                )
-                
-            // 🟡 Categoria 2: ALERTA (Fumaça/Vazamento)
-            // Parâmetro: Temperatura < 30 e Gás > 650 [cite: 1]
-            } else if temp <= 30.0 && gas >= 650.0 {
-                sendPushNotification(
-                    title: "⚠️ ALERTA DE FUMAÇA/GÁS",
-                    body: "Nível alto de gás detectado. Verificar a sala preventivamente."
-                )
-                
-            // 🟢 Categoria 1: NORMAL
-            // Parâmetro: Temperatura < 30 e Gás < 600 [cite: 1]
-            } else if temp <= 30.0 && gas <= 600.0 {
-                // Ambiente seguro e climatizado[cite: 1]. Não mandamos notificação, apenas mantemos o status verde na interface.
-                print("Status: Normal. Nada a reportar.")
-            }
+        // 🔴 Categoria 4: CRÍTICO (Incêndio Confirmado)
+        if temp >= 45.0 && gas >= 650.0 {
+            sendPushNotification(
+                title: "🚨 INCÊNDIO CONFIRMADO",
+                body: "Fogo ativo e fumaça detectados! Evacue imediatamente!"
+            )
+            
+        // 🟠 Categoria 3: ANOMALIA TÉRMICA (Calor sem fumaça)
+        } else if temp >= 45.0 && gas <= 600.0 {
+            sendPushNotification(
+                title: "🔥 ALERTA TÉRMICO",
+                body: "Calor excessivo detectado na sala. Verifique o local."
+            )
+            
+        // 🟡 Categoria 2: ALERTA (Fumaça/Vazamento)
+        } else if temp <= 30.0 && gas >= 650.0 {
+            sendPushNotification(
+                title: "⚠️ ALERTA DE FUMAÇA/GÁS",
+                body: "Nível alto de fumaça ou gás detectado. Verifique preventivamente."
+            )
+            
+        // 🟢 Categoria 1: NORMAL
+        } else if temp <= 30.0 && gas <= 600.0 {
+            print("Status: Ambiente seguro e climatizado.")
         }
     }
     
     func addDevice(name: String, roomType: RoomType, connection: ConnectionType, scannedCode: String? = nil) {
-        // 1. Se um código QR foi escaneado, salvamos ele na variável da classe
         if let mac = scannedCode, !mac.isEmpty {
             self.macConectado = mac
         }
         
-        // 2. Lógica original de criação de ambiente
         var targetRoom = rooms.first(where: { $0.type == roomType })
         if targetRoom == nil {
             let newRoom = Room(id: UUID(), name: roomType.rawValue, type: roomType)
@@ -193,7 +198,6 @@ class IoTViewModel: ObservableObject {
             targetRoom = newRoom
         }
         
-        // 3. Lógica original de criação do dispositivo
         let newDevice = Device(id: UUID(),
                                name: name,
                                roomId: targetRoom!.id,
@@ -205,6 +209,7 @@ class IoTViewModel: ObservableObject {
                                lastUpdated: Date())
                                
         devices.append(newDevice)
+        saveData()
     }
     
     func testAlarm(device: Device) {
