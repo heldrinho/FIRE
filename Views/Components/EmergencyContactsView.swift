@@ -53,23 +53,6 @@ struct EmergencyContactsView: View {
             
             Spacer()
             
-            // Botão da Rota de Evacuação (RF10 - Futuro)
-            Button(action: {
-                // Ação futura para exibir o mapa de rotas
-                print("Exibir rota de evacuação...")
-            }) {
-                HStack {
-                    Image(systemName: "mappin.circle")
-                        .font(.title3)
-                    Text("Ver Rota de Evacuação")
-                        .fontWeight(.semibold)
-                }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(Color.blue)
-                .cornerRadius(14)
-            }
         }
         .padding(24)
         .background(Color(.systemBackground))
