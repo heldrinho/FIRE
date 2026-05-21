@@ -8,13 +8,11 @@ struct AddDeviceView: View {
     
     @State private var deviceName = ""
     @State private var selectedRoom: RoomType = .kitchen
-    @State private var connectionType: ConnectionType = .wifi
     
-    // 1. NOVO ESTADO: Variável para guardar o código MAC/Serial extraído da imagem
     @State private var scannedQRCode: String? = nil
     
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
-    @State private var isShowingAlert = false
+    @State private var isShowingPhotoAlert = false
     @State private var alertTitle = ""
     @State private var alertMessage = ""
     
@@ -31,16 +29,10 @@ struct AddDeviceView: View {
                     }
                 }
                 
-                Section(header: Text("Método de Conexão (RF03)")) {
-                    Picker("Protocolo", selection: $connectionType) {
-                        Text("Wi-Fi (ESP32)").tag(ConnectionType.wifi)
-                        Text("Bluetooth LE").tag(ConnectionType.bluetooth)
-                    }
-                    .pickerStyle(SegmentedPickerStyle())
-                    
+                Section(header: Text("Pareamento do Dispositivo (RF03)")) {
                     PhotosPicker(selection: $selectedPhotoItem, matching: .images, photoLibrary: .shared()) {
                         HStack {
-                            Image(systemName: "photo.on.rectangle")
+                            Image(systemName: "qrcode.viewfinder")
                             Text("Importar QR Code da Galeria")
                         }
                         .foregroundColor(.red)
@@ -54,46 +46,52 @@ struct AddDeviceView: View {
                         }
                     }
                     
-                    // Feedback visual extra para o usuário indicando sucesso na leitura
                     if let code = scannedQRCode {
-                        Text("Código validado: \(code)")
+                        Text("Código lido: \(code)")
                             .font(.footnote)
-                            .foregroundColor(.green)
+                            .foregroundColor(.blue)
                     }
                 }
                 
                 Section {
                     Button(action: {
-                        // 2. INTEGRAÇÃO: Aqui enviamos o scannedQRCode para a ViewModel
                         iotVM.addDevice(name: deviceName.isEmpty ? "Novo Sensor" : deviceName,
                                         roomType: selectedRoom,
-                                        connection: connectionType,
+                                        connection: .wifi,
                                         scannedCode: scannedQRCode)
                         
-                        presentationMode.wrappedValue.dismiss()
+                        if !iotVM.showQRError {
+                            presentationMode.wrappedValue.dismiss()
+                        }
                     }) {
                         Text("Conectar ao Aplicativo")
                             .frame(maxWidth: .infinity, alignment: .center)
                             .foregroundColor(.white)
                     }
                     .listRowBackground(scannedQRCode == nil ? Color.gray : Color.red)
-                    // 👇 ADICIONE ESTA LINHA: Desativa o botão se scannedQRCode for nil
-                    .disabled(scannedQRCode == nil)
+                    .disabled(scannedQRCode == nil) // Obriga o usuário a ler a foto primeiro
                 }
             }
             .navigationBarTitle("Novo Detector", displayMode: .inline)
             .navigationBarItems(trailing: Button("Cancelar") {
                 presentationMode.wrappedValue.dismiss()
             })
-            .alert(isPresented: $isShowingAlert) {
+            .alert(isPresented: $isShowingPhotoAlert) {
                 Alert(
                     title: Text(alertTitle),
                     message: Text(alertMessage),
                     dismissButton: .default(Text("OK")) {
                         if alertTitle == "Sucesso" && deviceName.isEmpty {
-                            deviceName = "Detector Premium IoT"
+                            deviceName = "Sensor"
                         }
                     }
+                )
+            }
+            .alert(isPresented: $iotVM.showQRError) {
+                Alert(
+                    title: Text("Erro de Pareamento"),
+                    message: Text(iotVM.qrErrorMessage),
+                    dismissButton: .default(Text("Entendi"))
                 )
             }
         }
@@ -113,11 +111,10 @@ struct AddDeviceView: View {
         let features = detector?.features(in: ciImage) as? [CIQRCodeFeature]
         
         if let firstFeature = features?.first, let qrCodeString = firstFeature.messageString {
-            // 3. SALVAR O CÓDIGO: Guardamos a string decodificada no estado da tela
             DispatchQueue.main.async {
                 self.scannedQRCode = qrCodeString
             }
-            showAlert(title: "Sucesso", message: "Código capturado: \(qrCodeString). Configurações transferidas.")
+            showAlert(title: "Sucesso", message: "Código QR capturado com sucesso. Você já pode conectar.")
         } else {
             showAlert(title: "Aviso", message: "Nenhum QR Code válido foi encontrado na imagem selecionada.")
         }
@@ -129,7 +126,7 @@ struct AddDeviceView: View {
         DispatchQueue.main.async {
             self.alertTitle = title
             self.alertMessage = message
-            self.isShowingAlert = true
+            self.isShowingPhotoAlert = true
         }
     }
 }

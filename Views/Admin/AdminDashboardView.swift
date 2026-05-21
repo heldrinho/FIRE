@@ -12,7 +12,7 @@ struct AdminDashboardView: View {
     
     // Dados mocados para o condomínio
     @State private var apartments = [
-        ApartmentNode(id: "101", owner: "Hélder Filipe", status: .online, batteryWarning: false),
+        ApartmentNode(id: "101", owner: "Usuário", status: .online, batteryWarning: false),
         ApartmentNode(id: "102", owner: "Roberto", status: .alert, batteryWarning: false), // Fogo simulado
         ApartmentNode(id: "201", owner: "Ana Beatriz", status: .offline, batteryWarning: true),
         ApartmentNode(id: "202", owner: "Vago", status: .offline, batteryWarning: false)
