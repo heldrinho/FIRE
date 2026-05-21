@@ -1,0 +1,418 @@
+[
+    {
+        "id": "3d7a962aea1d9f13",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "8f5e19ff4ad7acdd",
+        "type": "cloudantplus",
+        "host": "APIkey",
+        "name": "",
+        "useapikey": false
+    },
+    {
+        "id": "9dce3ed5063f12d7",
+        "type": "ibmiot",
+        "name": "",
+        "keepalive": "60",
+        "serverName": "bzdvv6.messaging.internetofthings.ibmcloud.com",
+        "cleansession": true,
+        "appId": "",
+        "shared": false
+    },
+    {
+        "id": "4989d130000e30be",
+        "type": "cloudantplus",
+        "host": "https://8685b21f-dcdc-4864-a9bc-84e5121ccc12-bluemix.cloudantnosqldb.appdomain.cloud",
+        "name": "",
+        "useapikey": true
+    },
+    {
+        "id": "1c91dc0763d64ca7",
+        "type": "cloudantplus",
+        "host": "https://f1c0dcf9-5075-4061-a1f8-2f4ca596058a-bluemix.cloudant.com",
+        "name": "phCredencial",
+        "useapikey": true
+    },
+    {
+        "id": "c4852944d39675de",
+        "type": "http in",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "url": "leitura",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 190,
+        "y": 320,
+        "wires": [
+            [
+                "93c4b64042e3c3f1"
+            ]
+        ]
+    },
+    {
+        "id": "93c4b64042e3c3f1",
+        "type": "cloudantplus in",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "cloudant": "1c91dc0763d64ca7",
+        "database": "nf",
+        "service": "_ext_",
+        "search": "_all_",
+        "design": "",
+        "index": "",
+        "x": 370,
+        "y": 320,
+        "wires": [
+            [
+                "7e3c47ecaf6d926b"
+            ]
+        ]
+    },
+    {
+        "id": "7e3c47ecaf6d926b",
+        "type": "http response",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 610,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "db7655cb126414e8",
+        "type": "http in",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "url": "envio",
+        "method": "post",
+        "upload": true,
+        "swaggerDoc": "",
+        "x": 90,
+        "y": 780,
+        "wires": [
+            [
+                "7bb21fa45a785bb6"
+            ]
+        ]
+    },
+    {
+        "id": "67b7c8c09bfa8b2b",
+        "type": "http response",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 790,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "ce2e4ab5994c5456",
+        "type": "cloudantplus out",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "cloudant": "1c91dc0763d64ca7",
+        "database": "nf",
+        "service": "_ext_",
+        "payonly": true,
+        "operation": "insert",
+        "x": 610,
+        "y": 780,
+        "wires": [
+            [
+                "67b7c8c09bfa8b2b"
+            ]
+        ]
+    },
+    {
+        "id": "3a348da78ff687f3",
+        "type": "http in",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "url": "modificar",
+        "method": "put",
+        "upload": true,
+        "swaggerDoc": "",
+        "x": 180,
+        "y": 380,
+        "wires": [
+            [
+                "e37cf031ac2e840c"
+            ]
+        ]
+    },
+    {
+        "id": "4b42827ef71d7109",
+        "type": "http response",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 590,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "e37cf031ac2e840c",
+        "type": "cloudantplus out",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "cloudant": "1c91dc0763d64ca7",
+        "database": "nf",
+        "service": "_ext_",
+        "payonly": true,
+        "operation": "insert",
+        "x": 330,
+        "y": 380,
+        "wires": [
+            [
+                "4b42827ef71d7109"
+            ]
+        ]
+    },
+    {
+        "id": "42777aea23ca7c4a",
+        "type": "http in",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "url": "deletar",
+        "method": "delete",
+        "upload": true,
+        "swaggerDoc": "",
+        "x": 160,
+        "y": 520,
+        "wires": [
+            [
+                "22642fa0de400c84"
+            ]
+        ]
+    },
+    {
+        "id": "a979222b7b5498f5",
+        "type": "http response",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 790,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "2277a69ef1e551dd",
+        "type": "cloudantplus out",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "cloudant": "1c91dc0763d64ca7",
+        "database": "nf",
+        "service": "_ext_",
+        "payonly": true,
+        "operation": "delete",
+        "x": 590,
+        "y": 520,
+        "wires": [
+            [
+                "a979222b7b5498f5"
+            ]
+        ]
+    },
+    {
+        "id": "844c521289496fdb",
+        "type": "switch",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "istype",
+                "v": "array",
+                "vt": "array"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 310,
+        "y": 780,
+        "wires": [
+            [
+                "a96bd60cf7311ada"
+            ],
+            [
+                "ce2e4ab5994c5456"
+            ]
+        ]
+    },
+    {
+        "id": "a96bd60cf7311ada",
+        "type": "split",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 450,
+        "y": 740,
+        "wires": [
+            [
+                "ce2e4ab5994c5456"
+            ]
+        ]
+    },
+    {
+        "id": "22642fa0de400c84",
+        "type": "switch",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "istype",
+                "v": "array",
+                "vt": "array"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 330,
+        "y": 620,
+        "wires": [
+            [
+                "9697f07fdc20ea4d"
+            ],
+            [
+                "2277a69ef1e551dd"
+            ]
+        ]
+    },
+    {
+        "id": "9697f07fdc20ea4d",
+        "type": "split",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 430,
+        "y": 520,
+        "wires": [
+            [
+                "2277a69ef1e551dd"
+            ]
+        ]
+    },
+    {
+        "id": "7bb21fa45a785bb6",
+        "type": "json",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": true,
+        "x": 210,
+        "y": 740,
+        "wires": [
+            [
+                "844c521289496fdb"
+            ]
+        ]
+    },
+    {
+        "id": "7f8ea6acb12b988b",
+        "type": "catch",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "scope": [
+            "b9a8854a3424f484",
+            "87e04e0a41df7adf",
+            "2277a69ef1e551dd",
+            "e37cf031ac2e840c",
+            "ce2e4ab5994c5456",
+            "93c4b64042e3c3f1"
+        ],
+        "uncaught": false,
+        "x": 70,
+        "y": 880,
+        "wires": [
+            [
+                "87e04e0a41df7adf"
+            ]
+        ]
+    },
+    {
+        "id": "87e04e0a41df7adf",
+        "type": "cloudantplus in",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "cloudant": "1c91dc0763d64ca7",
+        "database": "nf",
+        "service": "_ext_",
+        "search": "_all_",
+        "design": "",
+        "index": "",
+        "x": 270,
+        "y": 880,
+        "wires": [
+            [
+                "4abc9902a4ac4e2f"
+            ]
+        ]
+    },
+    {
+        "id": "4abc9902a4ac4e2f",
+        "type": "function",
+        "z": "3d7a962aea1d9f13",
+        "name": "function 1",
+        "func": "// Verifica se recebemos dados válidos\nif (!msg.payload || !Array.isArray(msg.payload)) {\n    return null;\n}\n\n// Mapeia os documentos para o formato de exclusão em massa do CouchDB/Cloudant\nlet docsParaDeletar = msg.payload.map(doc => {\n    return {\n        _id: doc._id,      // O ID original do documento\n        _rev: doc._rev,    // A revisão atual (obrigatório para modificar)\n        _deleted: true     // O comando mágico que avisa o banco para apagar\n    };\n});\n\n// Substitui o payload pelo novo array formatado\nmsg.payload = docsParaDeletar;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 460,
+        "y": 880,
+        "wires": [
+            [
+                "b9a8854a3424f484"
+            ]
+        ]
+    },
+    {
+        "id": "b9a8854a3424f484",
+        "type": "cloudantplus out",
+        "z": "3d7a962aea1d9f13",
+        "name": "",
+        "cloudant": "1c91dc0763d64ca7",
+        "database": "nf",
+        "service": "_ext_",
+        "payonly": true,
+        "operation": "insert",
+        "x": 610,
+        "y": 880,
+        "wires": [
+            []
+        ]
+    }
+]
