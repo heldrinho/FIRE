@@ -29,7 +29,7 @@ struct DeviceDetailView: View {
                     Image(systemName: "smoke.fill")
                         .font(.largeTitle)
                         .foregroundColor(device.smokeLevel > 15 ? .red : .gray)
-                    Text("\(String(format: "%.1f", device.smokeLevel))%")
+                    Text("\(String(format: "%.2f", device.smokeLevel))%")
                         .font(.title)
                         .fontWeight(.bold)
                     Text("Nível de Fumaça")
@@ -42,7 +42,7 @@ struct DeviceDetailView: View {
             // Grid de Métricas do Sistema
             VStack(spacing: 16) {
                 HStack {
-                    MetricTile(title: "Temperatura", value: "\(String(format: "%.1f", device.temperature))°C", icon: "thermometer")
+                    MetricTile(title: "Temperatura", value: "\(String(format: "%.2f", device.temperature))°C", icon: "thermometer")
                     MetricTile(title: "Bateria", value: "\(device.batteryLevel)%", icon: "bolt.fill")
                 }
                 HStack {

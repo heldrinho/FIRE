@@ -103,8 +103,14 @@ class IoTViewModel: ObservableObject {
         }
     }
     
-    private func fetchSensorData() {
-        URLSession.shared.dataTaskPublisher(for: nodeRedURL)
+    func fetchSensorData() {
+        // 1. Cria a requisição
+        var request = URLRequest(url: nodeRedURL)
+        // 2. Força o iOS a ignorar o cache e buscar dados novos sempre
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        
+        // 3. Usa o 'request' no publisher em vez da 'url'
+        URLSession.shared.dataTaskPublisher(for: request)
             .map { $0.data }
             .decode(type: [NodeRedResponse].self, decoder: JSONDecoder())
             .receive(on: DispatchQueue.main)
@@ -244,4 +250,3 @@ class IoTViewModel: ObservableObject {
         return macPredicate.evaluate(with: mac)
     }
 }
-

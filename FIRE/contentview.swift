@@ -36,8 +36,8 @@ struct ContentView: View {
         }
         .animation(.easeInOut, value: authVM.isAuthenticated)
         .onAppear {
-                    requestNotificationPermission()
-                }
+            requestNotificationPermission()
+        }
     }
 }
 

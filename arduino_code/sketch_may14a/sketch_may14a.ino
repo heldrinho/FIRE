@@ -15,6 +15,9 @@ const char *WIFI_SSID = "HackaTruckIoT";
 const char *WIFI_PASSWORD = "iothacka";
 const char *URL = "http://192.168.128.118:1880/envio";
 
+// --- VARIÁVEL PARA GUARDAR O MAC ADDRESS ---
+String macAddress = "";
+
 // --- CONFIGURAÇÃO DO FILTRO DE MÉDIA MÓVEL ---
 const int NUM_AMOSTRAS = 30;     // Número de leituras para calcular a média (ajustável)
 int leiturasGas[NUM_AMOSTRAS];   // O array que guarda as últimas leituras
@@ -24,7 +27,7 @@ int gasFiltrado = 0;             // O valor final estável
 
 // Controle de tempo para envio (substituindo o delay travado)
 unsigned long tempoAnteriorEnvio = 0;
-const long intervaloEnvio = 1000; // Tempo em milissegundos entre envios (5 segundos)
+const long intervaloEnvio = 1000; // Tempo em milissegundos entre envios
 
 void setup() {
   Serial.begin(115200);
@@ -36,6 +39,12 @@ void setup() {
       Serial.print(".");
   }
   Serial.println("Connected");
+  
+  // PEGANDO O MAC ADDRESS APÓS CONECTAR AO WIFI
+  macAddress = WiFi.macAddress();
+  Serial.print("🏷️ MAC Address da Placa: ");
+  Serial.println(macAddress);
+  
   delay(2000);
   
   if (!bmp.begin(0x76)) { 
@@ -70,7 +79,7 @@ void loop() {
   gasFiltrado = totalGas / NUM_AMOSTRAS;
 
 
-  // === 2. ENVIO TEMPORIZADO PARA O NODE-RED (A cada 5 segundos) ===
+  // === 2. ENVIO TEMPORIZADO PARA O NODE-RED ===
   unsigned long tempoAtual = millis();
   
   if (tempoAtual - tempoAnteriorEnvio >= intervaloEnvio) {
@@ -80,15 +89,18 @@ void loop() {
     float temperatura = bmp.readTemperature();
 
     // Monitor Serial para acompanhar a diferença
-    Serial.print(F("Temp: "));
+// Monitor Serial para acompanhar a diferença
+    Serial.print(F("MAC: "));
+    Serial.print(macAddress); // <--- Adicionamos a impressão do MAC aqui
+    Serial.print(F(" | Temp: "));
     Serial.print(temperatura);
-    Serial.print(F(" *C | Gas Bruto (Instantâneo): "));
-    Serial.print(analogRead(AOUTpin)); // Mostra o valor sem filtro para comparação
-    Serial.print(F(" | Gas Filtrado (Média): "));
+    Serial.print(F(" *C | Gas Bruto: "));
+    Serial.print(analogRead(AOUTpin)); 
+    Serial.print(F(" | Gas Filtrado: "));
     Serial.println(gasFiltrado);
 
-    // Montando o JSON usando o valor filtrado e estável
-    String jsonPayload = "{\"temperatura\":" + String(temperatura) + ",\"gas\":" + String(gasFiltrado) + "}";
+    // 🚨 MONTANDO O JSON COM O MAC ADDRESS INCLUÍDO
+    String jsonPayload = "{\"mac\":\"" + macAddress + "\",\"temperatura\":" + String(temperatura) + ",\"gas\":" + String(gasFiltrado) + "}";
 
     // Enviando requisição HTTP POST
     httpClient.begin(client, URL);
@@ -98,7 +110,7 @@ void loop() {
     
     if (httpResponseCode > 0) {
       String content = httpClient.getString();
-      Serial.print("Resposta do Node-RED: ");
+      Serial.print("Resposta Node-RED: ");
       Serial.println(content);
     } else {
       Serial.print("Erro no POST: ");
@@ -110,5 +122,5 @@ void loop() {
   }
 
   // Pequeno intervalo de 100ms para o algoritmo colher amostras de gás com boa frequência
-  delay(100);
+  delay(5000);
 }

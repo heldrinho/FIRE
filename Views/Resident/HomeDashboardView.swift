@@ -233,9 +233,9 @@ struct DeviceCardView: View {
                 .lineLimit(1)
             
             HStack {
-                Text("\(String(format: "%.1f", device.temperature))°C")
+                Text("\(String(format: "%.2f", device.temperature))°C")
                 Spacer()
-                Text("\(String(format: "%.1f", device.smokeLevel))% Fumaça")
+                Text("\(String(format: "%.2f", device.smokeLevel))% Fumaça")
             }
             .font(.caption)
             .foregroundColor(.secondary)

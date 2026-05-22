@@ -7,12 +7,13 @@
 
 import Foundation
 
-struct NodeRedResponse: Decodable {
+struct NodeRedResponse: Codable {
     let id: String?
     let rev: String?
-    let mac: String?         // <-- Essa linha TEM que estar aqui
+    let mac: String?
     let temperatura: Double
     let gas: Double
+    let data_hora: Int
     
     enum CodingKeys: String, CodingKey {
         case id = "_id"
@@ -20,6 +21,7 @@ struct NodeRedResponse: Decodable {
         case mac             // <-- E essa também!
         case temperatura
         case gas
+        case data_hora
     }
 }
 
