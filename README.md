@@ -12,7 +12,7 @@
 ## 📖 Sobre o Projeto
 O **FIRE** é uma solução fim-a-fim de segurança residencial e predial focada na detecção precoce de incêndios. Composto por um **Aplicativo Nativo iOS** e integração direta com **Dispositivos IoT (ESP32)**, o sistema monitora em tempo real a temperatura e os níveis de fumaça dos ambientes, acionando notificações críticas com tempo de resposta inferior a 5 segundos em emergências.
 
-Este projeto foi estruturado tanto para viabilidade de **Plano de Negócios (MVP)** quanto para **Validação Acadêmica**, aplicando as melhores práticas de Engenharia de Software e Interface de Usuário (UI/UX).
+Este projeto teve seu início durante o programa **HackaTruck** e foi estruturado tanto para viabilidade de **Plano de Negócios (MVP)** quanto para **Validação Acadêmica**, aplicando as melhores práticas de Engenharia de Software e Interface de Usuário (UI/UX).
 
 ---
 
