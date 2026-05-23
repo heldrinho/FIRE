@@ -46,3 +46,13 @@ FIRE/
 │   ├── Resident/       # Telas exclusivas do fluxo do Morador
 │   └── Admin/          # Telas exclusivas do fluxo do Síndico
 └── Services/           # Camada de Rede, Telemetria e Conexão de Hardware
+```
+
+---
+
+## 👥 Equipe
+
+* Helder Domingos
+* João Átila
+* Nicolas de Sena
+* Pedro Henrique
